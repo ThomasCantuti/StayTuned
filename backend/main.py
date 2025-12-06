@@ -1,13 +1,9 @@
-"""
-FastAPI main application for AI Podcast Generator
-"""
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.routers import auth, podcasts
-from app.core.config import settings
+from app.routers import podcasts, find_urls
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,17 +24,16 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(find_urls.router, prefix="/urls", tags=["urls"])
 app.include_router(podcasts.router, prefix="/podcasts", tags=["podcasts"])
 
 @app.get("/")
