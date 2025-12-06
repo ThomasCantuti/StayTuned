@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 class ScraperService:
     def extract_text_from_html(self, url: str) -> str:
         """Extracts and returns the main text content from a given URL."""
@@ -61,14 +65,14 @@ class ScraperService:
         """Downloads the homepage, extracts article links and reads their content."""
         import time
         
-        print(f"\n📰 Analyzing: {site_url}")
+        logger.info(f"Analyzing: {site_url}")
         
         article_links = self.extract_article_links(site_url, max_links=max_articles)
-        print(f"   Found {len(article_links)} articles")
+        logger.info(f"Found {len(article_links)} articles")
         
         articles = []
         for link in article_links:
-            print(f"   → Downloading: {link[:60]}...")
+            logger.info(f"Downloading: {link[:60]}...")
             try:
                 content = self.extract_text_from_html(link)
                 if content and len(content) > 100:
@@ -77,7 +81,7 @@ class ScraperService:
                         'content': content
                     })
             except Exception as e:
-                print(f"     ⚠️ Error: {e}")
+                logger.warning(f"Error: {e}")
             time.sleep(1)  # Rate limiting
         
         return articles

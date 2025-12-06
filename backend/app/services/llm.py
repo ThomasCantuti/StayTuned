@@ -4,6 +4,9 @@ from llama_cpp.llama_cpp import llama_backend_free
 import torch
 import gc
 import platform
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LLMService:
@@ -39,4 +42,4 @@ class LLMService:
             elif torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except Exception as e:
-            print(f"Error while emptying GPU cache: {e}")
+            logger.error(f"Error while emptying GPU cache: {e}")
