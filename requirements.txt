@@ -8,3 +8,5 @@ trafilatura
 beautifulsoup4
 requests
 fastapi
+transformers
+scipy

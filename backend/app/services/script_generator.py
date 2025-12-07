@@ -20,6 +20,8 @@ class ScriptGeneratorService:
             {"role": "system",
             "content": f"""
                 You are a professional podcast host creating an engaging {duration}-minute episode about {topic}.
+                
+                IMPORTANT: Do NOT include your thinking process, reasoning, or internal thoughts in the response. Output ONLY the final podcast script.
 
                 Based on the following recent news articles, create a natural, conversational podcast script with **one person talking**, as if they are speaking directly to the audience.
 

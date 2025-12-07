@@ -1,3 +1,4 @@
+from transformers import AutoFeatureExtractor, AutoModel
 from datapizza.clients.openai_like import OpenAILikeClient
 from llama_cpp import Llama
 from llama_cpp.llama_cpp import llama_backend_free
@@ -16,17 +17,24 @@ class LLMService:
         return Llama(
             model_path=model_path,
             n_gpu_layers=-1,
-            n_ctx=0,
+            n_ctx=8192,
             verbose=True,
         )
     
-    def get_client(self, model_name: str) -> OpenAILikeClient:
+    def get_tts_model(self, model_path: str) -> tuple:
+        """Load the TTS model."""
+        feature_extractor = AutoFeatureExtractor.from_pretrained(model_path)
+        model = AutoModel.from_pretrained(model_path)
+        
+        return feature_extractor, model
+    
+    def get_client(self, model_name: str, base_url: str) -> OpenAILikeClient:
         """Creates and returns an OpenAI-like client for the LLM."""
         return OpenAILikeClient(
             api_key="",
             model=model_name,
             system_prompt="You are a helpful assistant.",
-            base_url="http://localhost:8000/v1",
+            base_url=base_url,
         )
     
     @staticmethod

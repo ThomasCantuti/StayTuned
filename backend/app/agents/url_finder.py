@@ -7,13 +7,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 tool_model = os.getenv("TOOL_MODEL")
+base_url_runtime = os.getenv("BASE_URL_RUNTIME")
 llm_service = LLMService()
 
 class URLFinderAgent:
     """Agent to find URLs related to a specific topic using a web fetch tool."""
 
     def __init__(self):
-        self.local_client = llm_service.get_client(tool_model)
+        self.local_client = llm_service.get_client(tool_model, base_url_runtime)
         
     def get_agent(self) -> Agent:
         """Creates and returns the URL finding agent."""

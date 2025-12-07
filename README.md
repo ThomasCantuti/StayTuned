@@ -24,5 +24,5 @@ StayTuned is a web application that allows users to create podcasts about their 
       ```
     - Start the server with:
       ```bash
-        llama-server -m ./models/Example_model.gguf --port 8000
+        llama-server -m ./models/Example_model.gguf --port 8080
       ```

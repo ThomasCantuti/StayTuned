@@ -209,3 +209,5 @@ __marimo__/
 
 # GGUF model files
 *.gguf
+
+VibeVoice-Realtime-0.5B/

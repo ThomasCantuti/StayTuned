@@ -1,10 +1,12 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
+import numpy as np
 import logging
 import time
 
 from app.services.scraper import ScraperService
 from app.services.script_generator import ScriptGeneratorService
+from app.services.tts import TTSGeneratorService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Initialize services
 scraper = ScraperService()
 script_generator = ScriptGeneratorService()
-
+tts_generator = TTSGeneratorService()
 
 class PodcastRequest(BaseModel):
     """Request model for podcast generation."""
@@ -28,6 +30,7 @@ class PodcastResponse(BaseModel):
     duration: int
     script: str
     sources: list[str]
+    audio: np.ndarray
 
 
 @router.post("/generate", response_model=PodcastResponse)
@@ -43,7 +46,7 @@ async def generate_podcast(request: PodcastRequest):
         
         # Step 1: Scrape content from URLs
         all_articles = []
-        for url in request.urls:
+        for url in request.urls[:2]:
             try:
                 articles = scraper.scrape_news_site(url, max_articles=request.max_articles_per_site)
                 all_articles.extend(articles)
@@ -72,11 +75,15 @@ async def generate_podcast(request: PodcastRequest):
             news_content=news_content
         )
         
+        # Step 3: Create the audio
+        audio = tts_generator.generate_audio(script)
+        
         return PodcastResponse(
             topic=request.topic,
             duration=request.duration,
             script=script,
-            sources=[article['url'] for article in all_articles]
+            sources=[article['url'] for article in all_articles],
+            audio=audio
         )
         
     except HTTPException:
