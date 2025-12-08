@@ -1,4 +1,5 @@
-from transformers import AutoFeatureExtractor, AutoModel
+from vibevoice.processor.vibevoice_processor import VibeVoiceProcessor
+from vibevoice.modular.modeling_vibevoice import VibeVoiceModel
 from datapizza.clients.openai_like import OpenAILikeClient
 from llama_cpp import Llama
 from llama_cpp.llama_cpp import llama_backend_free
@@ -22,11 +23,24 @@ class LLMService:
         )
     
     def get_tts_model(self, model_path: str) -> tuple:
-        """Load the TTS model."""
-        feature_extractor = AutoFeatureExtractor.from_pretrained(model_path)
-        model = AutoModel.from_pretrained(model_path)
+        """Load the VibeVoice TTS model and processor via remote code."""
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+            
+        dtype = torch.float16 if device != "cpu" else torch.float32
         
-        return feature_extractor, model
+        model = VibeVoiceModel.from_pretrained(
+            pretrained_model_name_or_path=model_path,
+            torch_dtype=dtype,
+            device_map=device
+        )
+        processor = VibeVoiceProcessor.from_pretrained(pretrained_model_name_or_path=model_path)
+
+        return processor, model, device
     
     def get_client(self, model_name: str, base_url: str) -> OpenAILikeClient:
         """Creates and returns an OpenAI-like client for the LLM."""

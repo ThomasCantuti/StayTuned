@@ -7,6 +7,6 @@ hf_hub_download(
 )
 
 snapshot_download(
-    repo_id="microsoft/VibeVoice-Realtime-0.5B",
-    local_dir="models/VibeVoice-Realtime-0.5B",
+    repo_id="microsoft/VibeVoice-1.5B",
+    local_dir="models/VibeVoice-1.5B"
 )
