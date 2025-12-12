@@ -22,7 +22,47 @@ StayTuned is a web application that allows users to create podcasts about their 
       ```bash
       brew install llama.cpp
       ```
-    - Start the server with:
+      - Start the server with:
+        ```bash
+          llama-server -m ./models/Example_model.gguf --port 8080
+        ```
+    - If on Windows or Linux with Blackwell architecture (RTX 50xx):
+    ```bash
+      # Get llama.cpp (if you don’t already have it)
+      git clone https://github.com/ggml-org/llama.cpp.git
+      cd llama.cpp
+
+      rm -rf build
+
+      cmake -B build \
+        -DGGML_CUDA=ON \
+        -DLLAMA_BUILD_TOOLS=ON \
+        -DLLAMA_BUILD_EXAMPLES=ON \
+        -DLLAMA_BUILD_SERVER=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CUDA_ARCHITECTURES=90 \
+        -DGGML_CUDA_ARCHITECTURES=90
+
+      cmake --build build --config Release -j"$(nproc)"
+
+      echo 'export PATH="$HOME/llama.cpp/build/bin:$PATH"' >> ~/.bashrc
+      source ~/.bashrc
+
+      sudo ln -s "$HOME/llama.cpp/build/bin/llama-cli" /usr/local/bin/llama-cli
+      sudo ln -s "$HOME/llama.cpp/build/bin/llama-server" /usr/local/bin/llama-server
+      ```
+    - If on Windows or Linux with older architectures:
+    ```bash
+      # Change just the build, the rest is the same as the Blackwell architecture
+      cmake -B build \
+        -DGGML_CUDA=ON \
+        -DLLAMA_BUILD_TOOLS=ON \
+        -DLLAMA_BUILD_EXAMPLES=ON \
+        -DLLAMA_BUILD_SERVER=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CUDA_ARCHITECTURES=native
+      ```
+    - Then make it run with:
       ```bash
-        llama-server -m ./models/Example_model.gguf --port 8080
+      llama-server -m ./models/Example_model.gguf --port 8080
       ```

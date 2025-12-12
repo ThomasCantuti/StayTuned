@@ -1,5 +1,4 @@
-from vibevoice.processor.vibevoice_processor import VibeVoiceProcessor
-from vibevoice.modular.modeling_vibevoice import VibeVoiceModel
+from transformers import AutoProcessor, AutoModel
 from datapizza.clients.openai_like import OpenAILikeClient
 from llama_cpp import Llama
 from llama_cpp.llama_cpp import llama_backend_free
@@ -30,17 +29,21 @@ class LLMService:
             device = "mps"
         else:
             device = "cpu"
-            
-        dtype = torch.float16 if device != "cpu" else torch.float32
+                    
+        processor = AutoProcessor.from_pretrained(model_path, use_flash_attention_2=True)
+        model = AutoModel.from_pretrained(model_path)
         
-        model = VibeVoiceModel.from_pretrained(
-            pretrained_model_name_or_path=model_path,
-            torch_dtype=dtype,
-            device_map=device
-        )
-        processor = VibeVoiceProcessor.from_pretrained(pretrained_model_name_or_path=model_path)
-
         return processor, model, device
+
+    def empty_tts_model_cache(self, model) -> None:
+        """Clears the GPU cache to free up memory."""
+        device = model.device.type
+        model.to("cpu")
+        if device == "mps":
+            torch.mps.empty_cache()
+        elif device == "cuda":
+            torch.cuda.empty_cache()
+        gc.collect()
     
     def get_client(self, model_name: str, base_url: str) -> OpenAILikeClient:
         """Creates and returns an OpenAI-like client for the LLM."""
@@ -58,10 +61,7 @@ class LLMService:
         llama_backend_free()
         gc.collect()
         
-        try:
-            if platform.system() == "Darwin":
-                torch.mps.empty_cache()
-            elif torch.cuda.is_available():
-                torch.cuda.empty_cache()
-        except Exception as e:
-            logger.error(f"Error while emptying GPU cache: {e}")
+        if platform.system() == "Darwin":
+            torch.mps.empty_cache()
+        elif torch.cuda.is_available():
+            torch.cuda.empty_cache()

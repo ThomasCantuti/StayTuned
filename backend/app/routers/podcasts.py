@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-import numpy as np
 import logging
 import time
 
@@ -30,7 +29,7 @@ class PodcastResponse(BaseModel):
     duration: int
     script: str
     sources: list[str]
-    audio: np.ndarray
+    audio_path: str
 
 
 @router.post("/generate", response_model=PodcastResponse)
@@ -44,16 +43,11 @@ async def generate_podcast(request: PodcastRequest):
         logger.info(f"Generating podcast for topic: {request.topic}")
         logger.info(f"Using {len(request.urls)} URLs")
         
-        # Step 1: Scrape content from URLs
         all_articles = []
-        for url in request.urls[:2]:
-            try:
+        for url in request.urls:
                 articles = scraper.scrape_news_site(url, max_articles=request.max_articles_per_site)
                 all_articles.extend(articles)
-                time.sleep(1)  # Rate limiting
-            except Exception as e:
-                logger.warning(f"Error scraping {url}: {e}")
-                continue
+                time.sleep(1)
         
         if not all_articles:
             raise HTTPException(
@@ -63,11 +57,12 @@ async def generate_podcast(request: PodcastRequest):
         
         logger.info(f"Scraped {len(all_articles)} articles")
         
-        # Step 2: Prepare content and generate script
         news_content = "\n\n".join([
             f"URL: {article['url']}\n\n{article['content']}" 
             for article in all_articles
         ])
+        
+        logger.info(f"Generated podcast script: {news_content}")
         
         script = script_generator.generate_podcast_script(
             duration=request.duration,
@@ -75,15 +70,14 @@ async def generate_podcast(request: PodcastRequest):
             news_content=news_content
         )
         
-        # Step 3: Create the audio
-        audio = tts_generator.generate_audio(script)
+        audio_path = tts_generator.generate_audio(script)
         
         return PodcastResponse(
             topic=request.topic,
             duration=request.duration,
             script=script,
             sources=[article['url'] for article in all_articles],
-            audio=audio
+            audio_path=audio_path
         )
         
     except HTTPException:

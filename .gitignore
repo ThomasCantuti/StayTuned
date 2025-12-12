@@ -210,5 +210,5 @@ __marimo__/
 # GGUF model files
 *.gguf
 
-VibeVoice-1.5B/
-VibeVoice/
+bark-small/
+*.wav
