@@ -2,13 +2,13 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 import logging
 
-from app.agents.url_finder import URLFinderAgent
+from app.services.url_finder import URLFinderService
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Initialize service
-url_finder = URLFinderAgent()
+url_finder = URLFinderService()
 
 
 class URLSearchRequest(BaseModel):
@@ -31,18 +31,12 @@ async def search_urls(request: URLSearchRequest):
     """
     try:
         logger.info(f"Searching URLs for topic: {request.topic}")
-        
-        agent = url_finder.get_agent()
-        agent_response = agent.run(
-            f"Give me the {request.max_sources} best sources to get updated news on {request.topic}."
-        )
-        urls = url_finder.agent_response_to_string(agent_response.text)
-        
-        logger.info(f"Found {len(urls)} URLs")
+        urls_response = url_finder.urls_search(request.topic, request.max_sources)
+        logger.info(f"URLs found: {urls_response.urls}")
         
         return URLSearchResponse(
             topic=request.topic,
-            urls=urls
+            urls=urls_response.urls
         )
         
     except Exception as e:

@@ -11,7 +11,7 @@ class ScriptGeneratorService:
     
     def __init__(self):
         self.llm_service = LLMService()
-        self.model_path = os.getenv("TOOL_MODEL_PATH")
+        self.model_path = os.getenv("LIGHT_MODEL_PATH")
         
     def generate_podcast_script(self, duration: int, topic: str, news_content: str) -> str:
         """Genera uno script per podcast basato sul contenuto delle news."""

@@ -1,7 +1,6 @@
-# git+https://github.com/huggingface/transformers.git@refs/pull/40546/head
 datapizza-ai
 datapizza-ai-clients-openai-like
-datapizza-ai-tools-web-fetch
+ddgs
 huggingface-hub
 torch
 llama-cpp-python
@@ -12,5 +11,4 @@ fastapi
 transformers
 diffusers
 accelerate
-VibeVoice
 # starlette_context # for windows or linux

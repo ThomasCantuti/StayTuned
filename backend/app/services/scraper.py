@@ -16,14 +16,16 @@ class ScraperService:
         # Fallback manual fetch with brotli handling
         import requests
         headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': url,
+            'Referer': 'https://www.google.com/',
         }
-        resp = requests.get(url, headers=headers, timeout=15)
-        resp.raise_for_status()
+        try:
+            resp = requests.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+        except Exception:
+            return ""
         html_text = resp.text
         enc = resp.headers.get('Content-Encoding', '').lower()
         return trafilatura.extract(html_text, include_comments=False, include_tables=True) or ""
@@ -35,14 +37,17 @@ class ScraperService:
         from urllib.parse import urljoin, urlparse
         
         headers = {
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate',
             'Accept-Language': 'en-US,en;q=0.9',
-            'Referer': url,
+            'Referer': 'https://www.google.com/',
         }
-        response = requests.get(url, headers=headers, timeout=15)
-        response.raise_for_status()
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+        except Exception as e:
+            logger.warning(f"Failed to fetch {url}: {e}")
+            return []
         soup = BeautifulSoup(response.text, 'html.parser')
         
         base_domain = urlparse(url).netloc

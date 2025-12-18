@@ -18,8 +18,8 @@ tts_generator = TTSGeneratorService()
 class PodcastRequest(BaseModel):
     """Request model for podcast generation."""
     topic: str
-    urls: list[str]  # URLs provided by the user
-    duration: int = 10  # duration in minutes
+    urls: list[str]
+    duration: int = 10
     max_articles_per_site: int = 3
 
 
