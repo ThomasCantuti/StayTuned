@@ -1,36 +1,18 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 import logging
-import time
 
-from app.services.scraper import ScraperService
 from app.services.script_generator import ScriptGeneratorService
 from app.services.tts import TTSGeneratorService
+from app.routers.schemas import PodcastRequest, PodcastResponse
+from app.services.web_tools.agents import scraper_agent, scraper_tool_limit
+from app.services.web_tools.schemas import ScraperResponse
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
 # Initialize services
-scraper = ScraperService()
 script_generator = ScriptGeneratorService()
 tts_generator = TTSGeneratorService()
-
-class PodcastRequest(BaseModel):
-    """Request model for podcast generation."""
-    topic: str
-    urls: list[str]
-    duration: int = 10
-    max_articles_per_site: int = 3
-
-
-class PodcastResponse(BaseModel):
-    """Response model for generated podcast."""
-    topic: str
-    duration: int
-    script: str
-    sources: list[str]
-    audio_path: str
-
 
 @router.post("/generate", response_model=PodcastResponse)
 async def generate_podcast(request: PodcastRequest):
@@ -45,9 +27,23 @@ async def generate_podcast(request: PodcastRequest):
         
         all_articles = []
         for url in request.urls:
-                articles = scraper.scrape_news_site(url, max_articles=request.max_articles_per_site)
-                all_articles.extend(articles)
-                time.sleep(1)
+            scraper_tool_limit.reset()
+            result = scraper_agent(
+                prompt=(
+                    f"Find and extract the most relevant article about '{request.topic}' "
+                    f"starting from this URL: {url}.\n\n"
+                    "Follow your loop: browse_page → read_article → evaluate_content → decide.\n"
+                    "If the first article isn't relevant, try another link. "
+                    "Return the article URL, title, and a concise summary."
+                ),
+                structured_output_model=ScraperResponse,
+            )
+            assert isinstance(result.structured_output, ScraperResponse), "Expected ScraperResponse"
+            article = result.structured_output
+            all_articles.append({
+                "script": article.content,
+                "sources": article.url
+            })
         
         if not all_articles:
             raise HTTPException(
@@ -58,7 +54,7 @@ async def generate_podcast(request: PodcastRequest):
         logger.info(f"Scraped {len(all_articles)} articles")
         
         news_content = "\n\n".join([
-            f"URL: {article['url']}\n\n{article['content']}" 
+            f"URL: {article['sources']}\n\n{article['script']}" 
             for article in all_articles
         ])
         
@@ -75,8 +71,8 @@ async def generate_podcast(request: PodcastRequest):
         return PodcastResponse(
             topic=request.topic,
             duration=request.duration,
-            script=script,
-            sources=[article['url'] for article in all_articles],
+            script="".join([article["script"] for article in all_articles]),
+            sources=[article["sources"] for article in all_articles],
             audio_path=audio_path
         )
         

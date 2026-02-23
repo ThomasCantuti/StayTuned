@@ -212,3 +212,7 @@ __marimo__/
 
 bark-small/
 *.wav
+
+VibeVoice-1.5B/
+
+.DS_Store

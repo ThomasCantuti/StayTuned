@@ -1,11 +1,6 @@
-datapizza-ai
-datapizza-ai-clients-openai-like
-ddgs
 huggingface-hub
-torch
-llama-cpp-python
-trafilatura
-beautifulsoup4
+strands-agents
+strands-agents-tools
 requests
 fastapi
 transformers
