@@ -4,12 +4,15 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app.routers.schemas import URLSearchRequest, URLSearchResponse
+from app.routers.schemas import URLSearchRequest, URLSearchResponse, ScrapeRequest, ScrapeResponse, ScrapedArticleOut
 from app.services.web_tools.agents import url_finder_agent, scraper_agent, scraper_tool_limit
 from app.services.web_tools.schemas import ScraperRequest, ScraperResponse
+from app.services.scraper import CrawlScraper
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+_scraper = CrawlScraper()
 
 @router.post("/search", response_model=URLSearchResponse)
 async def search_urls(request: URLSearchRequest):
@@ -26,12 +29,12 @@ async def search_urls(request: URLSearchRequest):
         assert isinstance(result.structured_output, URLSearchResponse), "Expected URLSearchResponse"
         urls_response = result.structured_output
         logger.info(f"URLs found: {urls_response.urls}")
-        
+
         return URLSearchResponse(
             topic=request.topic,
             urls=urls_response.urls
         )
-        
+
     except Exception as e:
         logger.error(f"Search URLs error: {str(e)}")
         raise HTTPException(
@@ -67,17 +70,69 @@ async def scrape_url(request: ScraperRequest):
         assert isinstance(result.structured_output, ScraperResponse), "Expected ScraperResponse"
         scraper_response = result.structured_output
         logger.info(f"URL successfully scraped: {scraper_response.url}")
-        
+
         return ScraperResponse(
             url=scraper_response.url,
             content=scraper_response.content,
             title=scraper_response.title,
             relevance_score=scraper_response.relevance_score,
         )
-        
+
     except Exception as e:
         logger.error(f"Scrape URL error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+
+@router.post("/extract", response_model=ScrapeResponse)
+async def extract_content(request: ScrapeRequest) -> ScrapeResponse:
+    """
+    Scrape the given URLs and return the best content related to the topic.
+
+    Uses crawl4ai (Playwright-based) for JS-rendered pages, then ranks
+    articles by topic relevance and cleans them via the LLM.
+    """
+    logger.info("Scraping %d URLs for topic: '%s'", len(request.urls), request.topic)
+
+    try:
+        articles = await _scraper.scrape_and_rank(
+            urls=request.urls,
+            topic=request.topic,
+            min_relevance=request.min_relevance,
+        )
+    except Exception as e:
+        logger.error("Scrape error: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        )
+
+    if not articles:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No relevant content found from the provided URLs",
+        )
+
+    top_articles = articles[: request.max_articles]
+
+    response = ScrapeResponse(
+        topic=request.topic,
+        articles=[
+            ScrapedArticleOut(
+                url=a.url,
+                title=a.title,
+                content=a.markdown,
+                relevance_score=a.relevance_score,
+            )
+            for a in top_articles
+        ],
+    )
+
+    logger.info(
+        "Returning %d articles (best score: %s)",
+        len(response.articles),
+        response.articles[0].relevance_score,
+    )
+    return response

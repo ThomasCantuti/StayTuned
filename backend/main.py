@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
 
-from app.routers import podcasts, find_urls
+from app.routers import podcasts, find_urls, scrape
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +35,7 @@ app.add_middleware(
 # Include routers
 app.include_router(find_urls.router, prefix="/urls", tags=["urls"])
 app.include_router(podcasts.router, prefix="/podcasts", tags=["podcasts"])
+app.include_router(scrape.router, prefix="/scrape", tags=["scrape"])
 
 @app.get("/")
 async def root():

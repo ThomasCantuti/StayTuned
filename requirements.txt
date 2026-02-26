@@ -2,6 +2,7 @@ huggingface-hub
 strands-agents
 strands-agents-tools
 requests
+crawl4ai
 fastapi
 transformers
 diffusers
