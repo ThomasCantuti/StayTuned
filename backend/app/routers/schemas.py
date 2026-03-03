@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from app.services.web_tools.schemas import ScrapedArticle
 
 class URLSearchRequest(BaseModel):
     """Request model for URL search."""
@@ -34,15 +35,7 @@ class ScrapeRequest(BaseModel):
     min_relevance: float = 0.1
 
 
-class ScrapedArticleOut(BaseModel):
-    """A single scraped article."""
-    url: str
-    title: str
-    content: str
-    relevance_score: float
-
-
 class ScrapeResponse(BaseModel):
     """Response model for scraped content."""
     topic: str
-    articles: list[ScrapedArticleOut]
+    articles: list[ScrapedArticle]

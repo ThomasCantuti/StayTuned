@@ -1,5 +1,4 @@
-from app.services.llm import LLMService
-from llama_cpp import Llama
+from app.clients.clients import get_model
 import os
 from dotenv import load_dotenv
 
@@ -10,12 +9,11 @@ class ScriptGeneratorService:
     """Service for generating podcast scripts using a Large Language Model (LLM)."""
     
     def __init__(self):
-        self.llm_service = LLMService()
         self.model_path = os.getenv("LIGHT_MODEL_PATH")
         
     def generate_podcast_script(self, duration: int, topic: str, news_content: str) -> str:
         """Genera uno script per podcast basato sul contenuto delle news."""
-        model: Llama = self.llm_service.get_model(self.model_path)
+        model = get_model(self.model_path)
         messages = [
             {"role": "system",
             "content": f"""

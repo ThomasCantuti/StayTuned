@@ -4,8 +4,9 @@ import logging
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.routers.schemas import ScrapeRequest, ScrapeResponse, ScrapedArticleOut
-from app.services.scraper import CrawlScraper
+from app.routers.schemas import ScrapeRequest, ScrapeResponse
+from app.services.web_tools.scraper import CrawlScraper
+from app.services.web_tools.schemas import ScrapedArticle
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -47,10 +48,10 @@ async def extract_content(request: ScrapeRequest) -> ScrapeResponse:
     response = ScrapeResponse(
         topic=request.topic,
         articles=[
-            ScrapedArticleOut(
+            ScrapedArticle(
                 url=a.url,
                 title=a.title,
-                content=a.markdown,
+                content=a.content,
                 relevance_score=a.relevance_score,
             )
             for a in top_articles

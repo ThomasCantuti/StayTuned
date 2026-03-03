@@ -123,7 +123,7 @@ async def extract_content(request: ScrapeRequest) -> ScrapeResponse:
             ScrapedArticleOut(
                 url=a.url,
                 title=a.title,
-                content=a.markdown,
+                content=a.content,
                 relevance_score=a.relevance_score,
             )
             for a in top_articles
