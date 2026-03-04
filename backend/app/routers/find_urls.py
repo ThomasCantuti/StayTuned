@@ -1,36 +1,47 @@
-from fastapi import APIRouter, HTTPException, status
+"""Route for discovering the best URLs for a given topic."""
+
 import logging
 
+from fastapi import APIRouter, HTTPException, status
+
 from app.routers.schemas import URLSearchRequest, URLSearchResponse
-from app.services.web_tools.agents import url_finder_agent
+from app.services.web_tools.url_finder import URLFinder
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+_finder = URLFinder()
+
+
 @router.post("/search", response_model=URLSearchResponse)
-async def search_urls(request: URLSearchRequest):
+async def search_urls(request: URLSearchRequest) -> URLSearchResponse:
     """
     Search for relevant URLs for a topic.
     These URLs can be saved and reused to generate podcasts.
+
+    Uses crawl4ai to scrape Google search results and returns
+    main-domain URLs whose content is most relevant to the topic.
     """
     try:
-        logger.info(f"Searching URLs for topic: {request.topic}")
-        urls_response = url_finder_agent.structured_output(
-            output_model=URLSearchResponse, 
-            prompt=f"Find the most relevant news URLs for the topic: {request.topic}"
+        logger.info("Searching URLs for topic: %s", request.topic)
+
+        urls = await _finder.find_urls(
+            topic=request.topic,
+            n=request.max_sources,
         )
-        logger.info(f"URLs found: {urls_response.urls}")
-        
+
+        logger.info("Found %d URLs for topic '%s'", len(urls), request.topic)
+
         return URLSearchResponse(
             topic=request.topic,
-            urls=urls_response.urls
+            urls=urls,
         )
-        
+
     except Exception as e:
-        logger.error(f"Search URLs error: {str(e)}")
+        logger.error("Search URLs error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            detail=str(e),
         )
 
 

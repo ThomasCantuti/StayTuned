@@ -1,7 +1,9 @@
 huggingface-hub
 strands-agents
 strands-agents-tools
-requests
+requests>=2.32.0
+urllib3>=2.0,<3
+chardet>=3.0.2,<6.0.0
 crawl4ai
 fastapi
 transformers
